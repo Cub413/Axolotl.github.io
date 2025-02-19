@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego Desbloqueado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Press Start 2P', monospace;
+            color: white;
+            overflow: hidden;
+                                 background: linear-gradient(90deg,#B100FF, #6200ea,#00BBFF);
+            background-size: 300% 300%;
+            animation: 
+        }
+
+        /* Fondo giratorio con tamaño ajustado */
+        .background-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: url('pressets/skins.png');
+            background-size: contain; /* Ajusta la imagen para que se vea completamente */
+            background-position: center;
+            background-repeat: no-repeat;
+            animation: rotateBackground 15s linear infinite;
+            z-index: -1; /* Mantener el fondo atrás */
+        }
+
+        @keyframes rotateBackground {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Animación para el fondo RGB */
+        @keyframes gradientBackground {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Texto en frente del fondo */
+        .unlock-text {
+          
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: blanchedalmond;
+            text-align: center;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.9);
+        }
+    </style>
+</head>
+<body>
+    <div class="background-container"></div>
+    <div class="unlock-text">
+        <p>Has desbloqueado todos los niveles</p>
+        <p>La contraseña es 413</p>
+    </div>
+</body>
+</html>

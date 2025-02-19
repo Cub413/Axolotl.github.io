@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pantalla de Inicio</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(90deg,#B100FF, #6200ea,#00BBFF);
+            color: white;
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            overflow: hidden;
+        }
+        .container {
+            position: relative;
+            z-index: 1;
+        }
+        .title {
+            font-size: 32px;
+            text-shadow: 3px 3px 5px rgba(0, 0, 0, 0.5);
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        .button {
+            display: inline-block;
+            margin: 10px;
+            padding: 15px 30px;
+            background: linear-gradient(90deg, #FD01FF 50%, #4a2a7a 50%);
+            border: 3px solid white;
+            border-radius: 8px;
+            color: white;
+            text-decoration: none;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.3s;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
+        }
+        .button:hover {
+            background: linear-gradient(90deg, #a78bfa 50%, #0DEDFF 50%);
+            transform: scale(1.1);
+        }
+        .menu-background {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9;
+        }
+        .menu {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #BC00FF;
+            padding: 20px;
+            border: 5px solid white;
+            border-radius: 10px;
+            text-align: center;
+            color: black;
+            font-size: 18px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            width: 500px;
+            height: 500px;
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: red;
+            color: white;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+        .close-btn:hover {
+            background: darkred;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">axolotl</h1>
+        <div class="button-container">
+            <a href="lvl1.html" class="button">Jugar</a>
+            <button class="button" onclick="mostrarOpciones()">Extras</button>
+            <button class="button" onclick="pedirContraseña()">Niveles</button>
+        </div>
+    </div>
+    <div id="menuBackground" class="menu-background" onclick="cerrarOpciones()"></div>
+    <div id="menuOpciones" class="menu">
+        <button class="close-btn" onclick="cerrarOpciones()">×</button>
+        <h2>✨️Extras✨️</h2>
+        <p>¿Ya has intentado una speedrun? Graba tu proceso y etiquétame para verlo: </p>
+        <button onclick="window.location.href='https://youtube.com/@cubito...?si=WFfL03P1X4Yn3umG';">CI Studios</button>
+    </div>
+    <div id="menuNiveles" class="menu" style="display:none;">
+        <button class="close-btn" onclick="cerrarNiveles()">×</button>
+        <h2>Selecciona un Nivel</h2>
+        <div id="niveles"></div>
+    </div>
+    <script>
+        function mostrarOpciones() {
+            document.getElementById("menuOpciones").style.display = "block";
+            document.getElementById("menuBackground").style.display = "block";
+        }
+        function cerrarOpciones() {
+            document.getElementById("menuOpciones").style.display = "none";
+            document.getElementById("menuBackground").style.display = "none";
+        }
+        function pedirContraseña() {
+            if (localStorage.getItem("nivelesDesbloqueados")) {
+                mostrarNiveles();
+            } else {
+                let pass = prompt("Introduce la contraseña para desbloquear niveles:");
+                if (pass === "413") {
+                    localStorage.setItem("nivelesDesbloqueados", "true");
+                    mostrarNiveles();
+                } else {
+                    alert("Contraseña incorrecta");
+                }
+            }
+        }
+        function mostrarNiveles() {
+            document.getElementById("menuNiveles").style.display = "block";
+            document.getElementById("menuBackground").style.display = "block";
+            let nivelesDiv = document.getElementById("niveles");
+            nivelesDiv.innerHTML = "";
+            for (let i = 1; i <= 10; i++) {
+                let btn = document.createElement("button");
+                btn.textContent = "Nivel " + i;
+                btn.className = "button";
+                btn.onclick = function() { window.location.href = `lvl${i}.html`; };
+                nivelesDiv.appendChild(btn);
+            }
+        }
+        function cerrarNiveles() {
+            document.getElementById("menuNiveles").style.display = "none";
+            document.getElementById("menuBackground").style.display = "none";
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini PVZ</title>
+            <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        @font-face {
+            font-family: 'Pixel';
+            src: url('/pressets/pixel_font.ttf'); /* Asegúrate de tener esta fuente en tu servidor */
+        }
+
+        body {
+            text-align: center;
+            background: #9800FF;
+            font-family: 'Pixel', sans-serif;
+        }
+            #pixelText {
+    position: fixed;
+    top: 10px; /* Coloca el texto cerca de la parte superior */
+    right: 10px; /* Coloca el texto en el lado derecho */
+    font-family: 'Press Start 2P', cursive; /* Usamos la fuente de Google Fonts "Press Start 2P" */
+    font-size: 15px; /* Ajusta el tamaño del texto */
+    color: black; /* Color del texto */
+    z-index: 100; /* Asegura que el texto esté por encima de otros elementos */
+}
+        canvas {
+            display: block;
+            margin: auto;
+            border: 2px solid black;
+        }
+
+        #mensaje {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 20px;
+            border: 2px solid black;
+            text-align: center;
+        }
+
+        .plantas-seleccion {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .planta-btn {
+            cursor: pointer;
+            margin: 0 10px;
+            border: 2px solid black;
+            background: white;
+            padding: 5px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .planta-btn img {
+            width: 50px;
+            height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <div id="pixelText">lvl 6</div>
+    <h2>Burbujas: <span id="soles">50</span></h2>
+    
+    <div class="plantas-seleccion">
+        <div class="planta-btn" onclick="seleccionarPlanta('disparadora')">
+            <img src="/pressets/axolot(1).png">
+            <span>50</span>
+        </div>
+        <div class="planta-btn" onclick="seleccionarPlanta('girasol')">
+            <img src="/pressets/axolot1.png">
+            <span>25</span>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+    <div id="mensaje">
+        <h2>Perdiste</h2>
+        <button onclick="reiniciarJuego()">Reiniciar</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
+        let soles = 50;
+        let plantas = [];
+        let zombis = [];
+        let balas = [];
+        let plantaSeleccionada = null;
+        let tiempo = 180; // 3 minutos en segundos
+        let intervaloZombis;
+        let intervaloTiempo;
+
+        const imagenes = {
+            disparadora: "/pressets/axolot(1).png",
+            girasol: "/pressets/axolot1.png",
+            zombi: "/pressets/axolot_daño.png"
+        };
+
+        function seleccionarPlanta(tipo) {
+            plantaSeleccionada = tipo;
+        }
+
+        canvas.addEventListener("click", (event) => {
+            if (!plantaSeleccionada) return;
+            const rect = canvas.getBoundingClientRect();
+            const x = Math.floor((event.clientX - rect.left) / 100) * 100 + 25;
+            const y = Math.floor((event.clientY - rect.top) / 100) * 100 + 25;
+
+            let costo = plantaSeleccionada === "disparadora" ? 50 : 25;
+            if (soles >= costo) {
+                let nuevaPlanta = { tipo: plantaSeleccionada, x, y, vida: 100 };
+                plantas.push(nuevaPlanta);
+                if (nuevaPlanta.tipo === "disparadora") {
+                    setInterval(() => {
+                        if (zombis.some(zombi => zombi.y === nuevaPlanta.y && zombi.x < 800)) {
+                            disparar(nuevaPlanta);
+                        }
+                    }, 1000);
+                } else if (nuevaPlanta.tipo === "girasol") {
+                    generarSoles(nuevaPlanta);
+                }
+                soles -= costo;
+                document.getElementById("soles").textContent = soles;
+            }
+        });
+
+        function disparar(planta) {
+            balas.push({ x: planta.x + 40, y: planta.y + 20, velocidad: 2 });
+        }
+
+        function generarSoles(planta) {
+            setInterval(() => {
+                soles += 25;
+                document.getElementById("soles").textContent = soles;
+            }, (Math.floor(Math.random() * 3) + 5) * 1000);
+        }
+
+        function generarZombi() {
+            let velocidad = Math.random() * 0.3 + 0.3; // Aumentar la dificultad
+            zombis.push({ x: 800, y: Math.floor(Math.random() * 5) * 100 + 25, vida:500, velocidad, atacando: false });
+        }
+
+        function dibujarSuelo() {
+            for (let row = 0; row < 5; row++) {
+                for (let col = 0; col < 8; col++) {
+                    ctx.fillStyle = (row + col) % 2 === 0 ? "#A0D468" : "#8CC152";
+                    ctx.fillRect(col * 100, row * 100, 100, 100);
+                }
+            }
+        }
+
+        function actualizarJuego() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            dibujarSuelo();
+            
+            plantas.forEach((planta, pIndex) => {
+                let img = new Image();
+                img.src = imagenes[planta.tipo];
+                ctx.drawImage(img, planta.x, planta.y, 50, 50);
+
+                zombis.forEach(zombi => {
+                    if (zombi.x <= planta.x + 40 && zombi.y === planta.y) {
+                        zombi.atacando = true;
+                        planta.vida -= 0.5;
+                    }
+                });
+
+                if (planta.vida <= 0) {
+                    plantas.splice(pIndex, 1);
+                    zombis.forEach(zombi => zombi.atacando = false);
+                }
+            });
+
+            zombis.forEach((zombi, zIndex) => {
+                let img = new Image();
+                img.src = imagenes.zombi;
+                ctx.drawImage(img, zombi.x, zombi.y, 50, 50);
+
+                if (!zombi.atacando) {
+                    zombi.x -= zombi.velocidad;
+                }
+
+                if (zombi.x <= 0) {
+                    perder();
+                }
+            });
+
+            balas.forEach((bala, bIndex) => {
+                ctx.fillStyle = "yellow";
+                ctx.fillRect(bala.x, bala.y, 10, 5);
+                bala.x += bala.velocidad;
+                
+                zombis.forEach((zombi, zIndex) => {
+                    if (bala.x >= zombi.x && bala.y >= zombi.y && bala.y <= zombi.y + 50) {
+                        zombis[zIndex].vida -= 50;
+                        balas.splice(bIndex, 1);
+                        if (zombi.vida <= 0) {
+                            zombis.splice(zIndex, 1);
+                        }
+                    }
+                });
+            });
+
+            requestAnimationFrame(actualizarJuego);
+        }
+
+        function perder() {
+            clearInterval(intervaloZombis);
+            clearInterval(intervaloTiempo);
+            document.getElementById("mensaje").style.display = "block";
+        }
+
+        function reiniciarJuego() {
+            location.reload();
+        }
+
+        function iniciarTemporizador() {
+            intervaloTiempo = setInterval(() => {
+                tiempo--;
+                if (tiempo <= 0) {
+                    window.location.href = "lvl7.html";
+                }
+            }, 1000);
+        }
+
+        function iniciarJuego() {
+            intervaloZombis = setInterval(generarZombi, 5000);
+            iniciarTemporizador();
+            actualizarJuego();
+        }
+
+        iniciarJuego();
+    </script>
+</body>
+</html>

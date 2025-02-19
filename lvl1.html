@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego 2D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        /* Fragmento CSS */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px); /* Fondo borroso */
+  background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+#activateBtn {
+  padding: 10px 20px;
+  font-size: 1.2em;
+  cursor: pointer;
+  background-color: #800080; /* Fondo morado */
+  color: #FFFFFF;
+  border: 3px solid #FFFFFF; /* Borde blanco que resalta el estilo pixel */
+  border-radius: 10px;
+  font-family: 'Press Start 2P', cursive; /* Fuente pixel art (asegúrate de cargarla si no está disponible) */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  image-rendering: pixelated; /* Forzar renderizado pixelado */
+}
+
+
+        canvas {
+            background-color: lightblue;
+            display: block;
+        }
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .jump {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+        }
+        .controls img, .jump img {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+        #retryBtn:hover {
+        background: linear-gradient(45deg, #FF4500, #FF6347);
+        transform: scale(1.1);
+    }
+
+    #nextBtn:hover {
+        background: linear-gradient(45deg, #228B22, #32CD32);
+        transform: scale(1.1);
+    }
+    #pixelText {
+    position: fixed;
+    top: 10px; /* Coloca el texto cerca de la parte superior */
+    right: 10px; /* Coloca el texto en el lado derecho */
+    font-family: 'Press Start 2P', cursive; /* Usamos la fuente de Google Fonts "Press Start 2P" */
+    font-size: 15px; /* Ajusta el tamaño del texto */
+    color: black; /* Color del texto */
+    z-index: 100; /* Asegura que el texto esté por encima de otros elementos */
+}
+/* Estilos para el botón con la imagen */
+#menuButton {
+    position: fixed;
+    top: 5px;
+    left: 200px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+#menuButton img {
+    width: 30px; /* Ajusta el tamaño de la imagen */
+    height: 30px; /* Ajusta el tamaño de la imagen */
+    border-radius: 5px;
+}
+
+/* Menú oculto inicialmente */
+#menu.hidden {
+    display: none;
+}
+
+#menu {
+    position: fixed;
+    top: 60px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    z-index: 100;
+}
+
+/* Estilo para el botón de cerrar */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.close-button:hover {
+    color: red; /* Cambia el color al pasar el mouse sobre él */
+}
+
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    <!-- Fragmento HTML -->
+<div id="overlay">
+  <button id="activateBtn">comenzar</button>
+</div>
+<div id="pixelText">lvl 1</div>
+<!-- Botón con imagen -->
+    <button id="menuButton">
+        <img src="pressets/idea.png" alt="Caja" />
+    </button>
+
+    <!-- Menú oculto inicialmente -->
+    <div id="menu" class="hidden">
+        <button id="closeMenu" class="close-button">×</button>
+        <p>Idea: Debemos esperar 10 segundos</p>
+        <p id="timer">Tiempo restante: 3:00</p>
+    </div>
+<!-- Menú de finalización -->
+<div id="endMenu" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.6); padding: 30px; border-radius: 20px; text-align: center; z-index: 10000; backdrop-filter: blur(12px); box-shadow: 0 0 20px rgba(0, 0, 0, 0.4); max-width: 90%; width: 400px;">
+    <p style="color: #FFD700; font-family: 'Press Start 2P', cursive; font-size: 26px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);">¡Nivel Completado!</p>
+    <button id="retryBtn" style="padding: 14px 28px; margin: 12px; font-family: 'Press Start 2P', cursive; background: linear-gradient(45deg, #FF6F61, #FF4500); border: none; color: white; font-size: 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">
+        Reintentar
+    </button>
+    <button id="nextBtn" style="padding: 14px 28px; margin: 12px; font-family: 'Press Start 2P', cursive; background: linear-gradient(45deg, #32CD32, #228B22); border: none; color: white; font-size: 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">
+        Siguiente
+    </button>
+</div>
+
+    <div class="controls">
+        <img src="pressets/izquierda_button.png" id="leftBtn">
+        <img src="pressets/derecha_button.png" id="rightBtn">
+    </div>
+    <div class="jump">
+        <img src="pressets/salto_button.png" id="jumpBtn">
+    </div>
+    
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const player = {
+            x: 100,
+            y: canvas.height - 150,
+            width: 50,
+            height: 50,
+            dx: 0,
+            dy: 0,
+            gravity: 0.5,
+            isJumping: false,
+            frame: 0,
+            facingRight: true, // Inicia mirando hacia la derecha
+            img1: new Image(),
+            img2: new Image(),
+            moveInterval: null
+        };
+        player.img1.src = "pressets/axolot1.png";
+        player.img2.src = "pressets/axolot2.png";
+
+
+        const ground = {
+            x: 0,
+            y: canvas.height - 50,
+            width: 50, // Cada cuadro del suelo tiene 50px de ancho
+            height: 50,
+            img: new Image()
+        };
+        
+        ground.img.src = "pressets/cesped.png";
+
+        // Plataformas (suelo compuesto por cuadros)
+        const platforms = [];
+        // Asegurémonos de generar más plataformas
+for (let i = 0; i < canvas.width / ground.width + 100; i++) {
+    platforms.push({ x: i * ground.width, y: ground.y, width: ground.width, height: ground.height });
+}
+
+        function toggleFrame() {
+            player.frame = player.frame === 0 ? 1 : 0;
+        }
+
+        // Función que alterna las texturas mientras el botón está presionado
+        function startAlternating() {
+            if (player.moveInterval) clearInterval(player.moveInterval); // Detener la alternancia si ya está activa
+            player.moveInterval = setInterval(toggleFrame, 200); // Cambiar la textura cada 200ms
+        }
+
+        function stopAlternating() {
+            if (player.moveInterval) {
+                clearInterval(player.moveInterval); // Detener la alternancia
+                player.moveInterval = null;
+            }
+            player.frame = 0; // Restablecer la textura a la inicial cuando se deja de mover
+        }
+
+        document.getElementById("leftBtn").addEventListener("touchstart", () => {
+            if (player.facingRight) {
+                player.facingRight = false;
+                toggleFrame();
+            }
+            player.dx = -5;
+            startAlternating();
+        });
+        document.getElementById("leftBtn").addEventListener("touchend", () => {
+            player.dx = 0;
+            stopAlternating();
+        });
+
+        document.getElementById("rightBtn").addEventListener("touchstart", () => {
+            if (!player.facingRight) {
+                player.facingRight = true;
+                toggleFrame();
+            }
+            player.dx = 5;
+            startAlternating();
+        });
+        document.getElementById("rightBtn").addEventListener("touchend", () => {
+            player.dx = 0;
+            stopAlternating();
+        });
+
+        document.getElementById("jumpBtn").addEventListener("touchstart", () => {
+            if (!player.isJumping) {
+                player.dy = -10;
+                player.isJumping = true;
+                toggleFrame();
+            }
+        });
+
+        function update() {
+            player.x += player.dx;
+            player.y += player.dy;
+            player.dy += player.gravity;
+
+            if (player.y + player.height >= ground.y) {
+                player.y = ground.y - player.height;
+                player.dy = 0;
+                player.isJumping = false;
+            }
+
+            // Desplazar la vista de la cámara para que siempre esté centrada en el jugador
+            const cameraOffset = canvas.width / 2 - player.x;
+
+            requestAnimationFrame(update);
+            draw(cameraOffset);
+        }
+
+        function draw(cameraOffset) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Dibujar las plataformas (suelo)
+            platforms.forEach(platform => {
+                ctx.drawImage(ground.img, platform.x + cameraOffset, platform.y, platform.width, platform.height);
+            });
+
+            // Dibujar el jugador con la textura volteada si es necesario
+            const imgToDraw = player.frame === 0 ? player.img1 : player.img2;
+            if (player.facingRight) {
+                ctx.drawImage(imgToDraw, player.x + cameraOffset, player.y, player.width, player.height);
+            } else {
+                ctx.save();
+                ctx.scale(-1, 1); // Volteamos horizontalmente
+                ctx.drawImage(imgToDraw, -(player.x + cameraOffset) - player.width, player.y, player.width, player.height);
+                ctx.restore();
+            }
+        }
+        
+        // Declaración de las espinas más altas
+let spikes = [
+    { x: 300, y: canvas.height - 100, width: 50, height: 50 },
+    { x: 600, y: canvas.height - 100, width: 50, height: 50 },
+    { x: 10, y: canvas.height - 100, width: 50, height: 50 },
+        { x: 10, y: canvas.height - 130, width: 50, height: 50 },
+        { x: 10, y: canvas.height - 140, width: 50, height: 50 },
+        { x: 10, y: canvas.height - 110, width: 50, height: 50 },
+        { x: 10, y: canvas.height - 120, width: 50, height: 50 },
+        { x: 10, y: canvas.height - 150, width: 50, height: 50 },
+        { x: 10, y: canvas.height - 160, width: 50, height: 50 },
+                { x: 10, y: canvas.height - 170, width: 50, height: 50 },
+    //copiar este 👇 para mas espinas o pinchos//
+    { x: 1200, y: canvas.height - 100, width: 50, height: 50 },
+    //ese 👆 listo//
+        { x: 1800, y: canvas.height - 150, width: 50, height: 100 },
+    { x: 900, y: canvas.height - 100, width: 50, height: 50 }
+];
+
+// Cargar la imagen de las espinas
+const spikeImg = new Image();
+spikeImg.src = "pressets/pincho.png";
+
+// Variables para los corazones
+let hearts = 3; // Número inicial de corazones
+let invulnerable = false; // Estado de inmortalidad
+let invulnerabilityTimer = 0; // Temporizador para inmortalidad
+let spikesTouched = 0; // Contador de los pinchos tocados
+let canLoseHeart = true; // Bandera para permitir perder un corazón
+const heartImg = new Image();
+heartImg.src = "pressets/corazon.png";
+
+// Función para dibujar las espinas
+function drawSpikes(cameraOffset) {
+    for (let i = 0; i < spikes.length; i++) {
+        ctx.drawImage(spikeImg, spikes[i].x + cameraOffset, spikes[i].y, spikes[i].width, spikes[i].height);
+    }
+}
+
+// Función para dibujar los corazones
+function drawHearts() {
+    for (let i = 0; i < hearts; i++) {
+        ctx.drawImage(heartImg, 10 + i * 40, 10, 30, 30); // Posición de los corazones
+    }
+}
+
+// Función para verificar la colisión con las espinas
+function checkSpikeCollision() {
+    // Si está invulnerable, no se procesan las colisiones
+    if (invulnerable) return;
+
+    let heartLost = false; // Variable para verificar si ya se ha perdido un corazón
+
+    for (let i = 0; i < spikes.length; i++) {
+        // Verificar colisión de cualquier parte del jugador con las espinas
+        if (
+            player.x < spikes[i].x + spikes[i].width &&
+            player.x + player.width > spikes[i].x &&
+            player.y < spikes[i].y + spikes[i].height &&
+            player.y + player.height > spikes[i].y
+        ) {
+            // Verificar que solo se pierda un corazón por cada toque
+            if (!heartLost) {
+                // Activar inmortalidad por 3 segundos
+                invulnerable = true;
+                invulnerabilityTimer = 3; // 3 segundos de inmortalidad
+
+                // Expulsar al jugador hacia atrás
+                player.dx = -5; // Desplazar el jugador hacia la izquierda (ajustar según el nivel de expulsión deseado)
+
+                // Perder 1 corazón
+                hearts--;
+
+                // Si ya no hay corazones, reiniciar el juego
+                if (hearts <= 0) {
+                    setTimeout(() => {
+                        location.reload(); // Recargar la página (reiniciar el juego)
+                    }, 1000); // Esperar 1 segundo antes de recargar
+                }
+
+                // Eliminar el pincho tocado
+                spikes.splice(i, 1); // Elimina el pincho tocado del arreglo
+
+                // Marcar que ya se perdió un corazón en este ciclo
+                heartLost = true;
+            }
+
+            break; // Solo contar 1 pincho por colisión
+        }
+    }
+}
+
+// Función para manejar el temporizador de invulnerabilidad
+function handleInvulnerability() {
+    if (invulnerable) {
+        invulnerabilityTimer--; // Decrementar el temporizador
+        if (invulnerabilityTimer <= 0) {
+            invulnerable = false; // Terminar la inmortalidad
+            canLoseHeart = true; // Permitir perder otro corazón en el siguiente ciclo
+        }
+    }
+}
+
+// Función de actualización del juego
+function update() {
+    player.x += player.dx;
+    player.y += player.dy;
+    player.dy += player.gravity;
+
+    if (player.y + player.height >= ground.y) {
+        player.y = ground.y - player.height;
+        player.dy = 0;
+        player.isJumping = false;
+    }
+
+    // Verificar colisiones con las espinas
+    checkSpikeCollision();
+
+    // Manejar el temporizador de invulnerabilidad
+    handleInvulnerability();
+
+    // Desplazar la vista de la cámara
+    const cameraOffset = canvas.width / 2 - player.x;
+
+    requestAnimationFrame(update);
+    draw(cameraOffset);
+    drawSpikes(cameraOffset); // Dibujar las espinas
+    drawHearts(); // Dibujar los corazones
+}
+
+    // Cargar la imagen del final
+    const endImg = new Image();
+    endImg.src = "pressets/end.png";
+
+    // Definir la meta final
+    const endPoint = {
+        x: 1600, // Ajusta la posición según el nivel
+        y: canvas.height - 200,
+        width: 100,
+        height: 160
+    };
+
+    // Velocidad corregida
+    const playerSpeed = 0.9; // Antes era muy rápido
+
+    // Función para dibujar la meta final
+    function drawEndPoint(cameraOffset) {
+        ctx.drawImage(endImg, endPoint.x + cameraOffset, endPoint.y, endPoint.width, endPoint.height);
+    }
+
+    // Verificar si el jugador ha tocado la meta
+    function checkEndCollision() {
+        if (
+            player.x < endPoint.x + endPoint.width &&
+            player.x + player.width > endPoint.x &&
+            player.y < endPoint.y + endPoint.height &&
+            player.y + player.height > endPoint.y
+        ) {
+            document.getElementById("endMenu").style.display = "block"; // Mostrar menú
+        }
+    }
+
+    // Eventos de los botones
+    document.getElementById("retryBtn").addEventListener("click", () => {
+        location.reload(); // Reiniciar nivel
+    });
+
+    document.getElementById("nextBtn").addEventListener("click", () => {
+        window.location.href = "lvl2.html"; // Cargar el siguiente nivel
+    });
+
+    // Modificar la función `update()`
+    function update() {
+        player.x += player.dx * playerSpeed; // Se ajustó la velocidad
+        player.y += player.dy;
+        player.dy += player.gravity;
+
+        if (player.y + player.height >= ground.y) {
+            player.y = ground.y - player.height;
+            player.dy = 0;
+            player.isJumping = false;
+        }
+
+        checkSpikeCollision();
+        checkEndCollision(); // Verificar si el jugador llegó al final
+        handleInvulnerability();
+
+        const cameraOffset = canvas.width / 2 - player.x;
+
+        requestAnimationFrame(update);
+        draw(cameraOffset);
+        drawSpikes(cameraOffset);
+        drawHearts();
+        drawEndPoint(cameraOffset); // Dibujar la meta final
+    }
+
+    update();
+
+//aqui van mas cosas//
+
+let timerDuration = 10; // 3 minutos en segundos
+let timerInterval;
+let timerActive = false;
+
+// Obtener elementos del DOM
+const menuButton = document.getElementById("menuButton");
+const menu = document.getElementById("menu");
+const timerDisplay = document.getElementById("timer");
+const closeMenuButton = document.getElementById("closeMenu");
+
+// Función para mostrar el menú
+menuButton.addEventListener("click", () => {
+    if (!timerActive) {
+        startTimer(); // Inicia el temporizador si no está activo
+    }
+    menu.classList.remove("hidden"); // Muestra el menú
+});
+
+// Función para cerrar el menú
+closeMenuButton.addEventListener("click", () => {
+    menu.classList.add("hidden"); // Oculta el menú
+});
+
+// Función para iniciar el temporizador
+function startTimer() {
+    timerActive = true;
+
+    timerInterval = setInterval(() => {
+        const minutes = Math.floor(timerDuration / 60);
+        const seconds = timerDuration % 60;
+        timerDisplay.textContent = `Tiempo restante: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+
+        // Decrementar el tiempo
+        if (timerDuration > 0) {
+            timerDuration--;
+        } else {
+            clearInterval(timerInterval); // Detener el temporizador
+            alert("no toques las espinas,te expulsara hacia el lado contrario y perderas vidas ");
+        }
+    }, 1000);
+}
+
+
+        update();
+   document.addEventListener("DOMContentLoaded", function () {
+    const leftBtn = document.getElementById("leftBtn");
+    const rightBtn = document.getElementById("rightBtn");
+    const jumpBtn = document.getElementById("jumpBtn");
+    
+    const buttonSound = new Audio("pressets/button.mp3");
+    let isPlaying = false;
+    
+    function playButtonSound() {
+        if (!isPlaying) {
+            isPlaying = true;
+            buttonSound.currentTime = 0.2;
+            buttonSound.play();
+            
+            setTimeout(() => {
+                buttonSound.pause(); // Detener después de 0.5 segundos
+                buttonSound.currentTime = 0;
+                isPlaying = false;
+            }, 500);
+        }
+    }
+    
+    function stopButtonSound() {
+        isPlaying = false;
+    }
+    
+    leftBtn.addEventListener("mousedown", playButtonSound);
+    rightBtn.addEventListener("mousedown", playButtonSound);
+    jumpBtn.addEventListener("mousedown", playButtonSound);
+    
+    leftBtn.addEventListener("mouseup", stopButtonSound);
+    rightBtn.addEventListener("mouseup", stopButtonSound);
+    jumpBtn.addEventListener("mouseup", stopButtonSound);
+    
+    leftBtn.addEventListener("mouseleave", stopButtonSound);
+    rightBtn.addEventListener("mouseleave", stopButtonSound);
+    jumpBtn.addEventListener("mouseleave", stopButtonSound);
+});
+let moveInterval = null;
+
+function startAlternatingTexture() {
+    if (!moveInterval) {
+        // Cambiar inmediatamente la textura al presionar
+        player.img1.src = "pressets/axolot2.png";
+        
+        // Iniciar la alternancia si el botón sigue presionado
+        moveInterval = setInterval(() => {
+            player.img1.src = (player.img1.src.includes("axolot1.png")) 
+                ? "pressets/axolot2.png" 
+                : "pressets/axolot1.png";
+        }, 200);
+    }
+}
+
+function stopAlternatingTexture() {
+    clearInterval(moveInterval);
+    moveInterval = null;
+    player.img1.src = "pressets/axolot1.png"; // Volver a la textura original
+}
+
+document.getElementById("leftBtn").addEventListener("touchstart", () => {
+    player.dx = -5;
+    startAlternatingTexture();
+});
+document.getElementById("leftBtn").addEventListener("touchend", () => {
+    player.dx = 0;
+    stopAlternatingTexture();
+});
+
+document.getElementById("rightBtn").addEventListener("touchstart", () => {
+    player.dx = 5;
+    startAlternatingTexture();
+});
+document.getElementById("rightBtn").addEventListener("touchend", () => {
+    player.dx = 0;
+    stopAlternatingTexture();
+});
+// Fragmento JavaScript
+const audio1 = new Audio('pressets/song1.mp3');
+const audio2 = new Audio('pressets/song2.mp3');
+
+// Función para reproducir la secuencia de audio en bucle
+function playSequence() {
+  audio1.play();
+  audio1.onended = () => {
+    audio2.play();
+  };
+  audio2.onended = () => {
+    playSequence();
+  };
+}
+
+// Manejar el clic del botón para iniciar el audio y ocultar el overlay
+document.getElementById('activateBtn').addEventListener('click', () => {
+  document.getElementById('overlay').style.display = 'none';
+  playSequence();
+});
+
+// Función para ocultar los controles
+function hideControls() {
+    document.querySelector(".controls").style.display = "none";
+    document.querySelector(".jump").style.display = "none";
+}
+
+// Verificar si el jugador ha tocado la meta
+function checkEndCollision() {
+    if (
+        player.x < endPoint.x + endPoint.width &&
+        player.x + player.width > endPoint.x &&
+        player.y < endPoint.y + endPoint.height &&
+        player.y + player.height > endPoint.y
+    ) {
+        // Ocultar controles y mostrar el menú
+        hideControls();
+        document.getElementById("endMenu").style.display = "block"; // Mostrar menú
+    }
+}
+
+
+    </script>
+</body>
+</html>
+
+

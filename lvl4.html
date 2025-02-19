@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego 2D</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        /* Fragmento CSS */
+#overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  backdrop-filter: blur(8px); /* Fondo borroso */
+  background: rgba(0, 0, 0, 0.5); /* Fondo semitransparente */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+#activateBtn {
+  padding: 10px 20px;
+  font-size: 1.2em;
+  cursor: pointer;
+  background-color: #800080; /* Fondo morado */
+  color: #FFFFFF;
+  border: 3px solid #FFFFFF; /* Borde blanco que resalta el estilo pixel */
+  border-radius: 10px;
+  font-family: 'Press Start 2P', cursive; /* Fuente pixel art (asegúrate de cargarla si no está disponible) */
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  image-rendering: pixelated; /* Forzar renderizado pixelado */
+}
+
+
+        canvas {
+            background-color: lightblue;
+            display: block;
+        }
+        .controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .jump {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+        }
+        .controls img, .jump img {
+            width: 50px;
+            height: 50px;
+            cursor: pointer;
+        }
+        #retryBtn:hover {
+        background: linear-gradient(45deg, #FF4500, #FF6347);
+        transform: scale(1.1);
+    }
+
+    #nextBtn:hover {
+        background: linear-gradient(45deg, #228B22, #32CD32);
+        transform: scale(1.1);
+    }
+    #pixelText {
+    position: fixed;
+    top: 10px; /* Coloca el texto cerca de la parte superior */
+    right: 10px; /* Coloca el texto en el lado derecho */
+    font-family: 'Press Start 2P', cursive; /* Usamos la fuente de Google Fonts "Press Start 2P" */
+    font-size: 15px; /* Ajusta el tamaño del texto */
+    color: black; /* Color del texto */
+    z-index: 100; /* Asegura que el texto esté por encima de otros elementos */
+}
+/* Estilos para el botón con la imagen */
+#menuButton {
+    position: fixed;
+    top: 5px;
+    left: 200px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 10px;
+}
+
+#menuButton img {
+    width: 30px; /* Ajusta el tamaño de la imagen */
+    height: 30px; /* Ajusta el tamaño de la imagen */
+    border-radius: 5px;
+}
+
+/* Menú oculto inicialmente */
+#menu.hidden {
+    display: none;
+}
+
+#menu {
+    position: fixed;
+    top: 60px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    font-family: Arial, sans-serif;
+    font-size: 18px;
+    z-index: 100;
+}
+
+/* Estilo para el botón de cerrar */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.close-button:hover {
+    color: red; /* Cambia el color al pasar el mouse sobre él */
+}
+
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+    <!-- Fragmento HTML -->
+
+<div id="pixelText">lvl 4</div>
+<!-- Botón con imagen -->
+    <button id="menuButton">
+
+    </button>
+
+    <!-- Menú oculto inicialmente -->
+    <div id="menu" class="hidden">
+        <button id="closeMenu" class="close-button">×</button>
+        <p>Idea: Debemos esperar 10 segundos</p>
+        <p id="timer">Tiempo restante: 3:00</p>
+    </div>
+<!-- Menú de finalización -->
+<div id="endMenu" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(0, 0, 0, 0.6); padding: 30px; border-radius: 20px; text-align: center; z-index: 10000; backdrop-filter: blur(12px); box-shadow: 0 0 20px rgba(0, 0, 0, 0.4); max-width: 90%; width: 400px;">
+    <p style="color: #FFD700; font-family: 'Press Start 2P', cursive; font-size: 26px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);">¡Nivel Completado!</p>
+    <button id="retryBtn" style="padding: 14px 28px; margin: 12px; font-family: 'Press Start 2P', cursive; background: linear-gradient(45deg, #FF6F61, #FF4500); border: none; color: white; font-size: 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">
+        Reintentar
+    </button>
+    <button id="nextBtn" style="padding: 14px 28px; margin: 12px; font-family: 'Press Start 2P', cursive; background: linear-gradient(45deg, #32CD32, #228B22); border: none; color: white; font-size: 20px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease;">
+        Siguiente
+    </button>
+</div>
+
+    <div class="controls">
+      <button onclick="window.location.href='lvl4.html';">Reiniciar</button>
+
+
+    </div>
+    <div class="jump">
+        <img src="pressets/salto_button.png" id="jumpBtn">
+    </div>
+    
+    <script>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+const player = {
+    x: 100,
+    y: canvas.height / 2,
+    width: 50,
+    height: 50,
+    dy: 0,
+    gravity: 0.5,
+    jumpStrength: -8,
+    img: new Image()
+};
+player.img.src = "pressets/axolot2.png";
+
+const heartImg = new Image();
+heartImg.src = "pressets/corazon.png"; // Imagen de vida
+
+const obstacles = [];
+const obstacleWidth = 80;
+const obstacleGap = 200; // Mayor separación entre obstáculos
+const obstacleSpacing = 250; // Más espacio entre obstáculos
+let frameCount = 0;
+let gameStarted = false;
+let gameTimer;
+let lives = 5; // Número de vidas
+
+function spawnObstacle() {
+    const height = Math.random() * (canvas.height / 2);
+    obstacles.push({ x: canvas.width, y: 0, width: obstacleWidth, height }); // Parte superior
+    obstacles.push({ x: canvas.width, y: height + obstacleGap, width: obstacleWidth, height: canvas.height }); // Parte inferior
+}
+
+document.getElementById("jumpBtn").addEventListener("touchstart", () => {
+    if (!gameStarted) {
+        gameStarted = true;
+        startGame();
+    }
+    player.dy = player.jumpStrength;
+});
+
+function startGame() {
+    gameTimer = setTimeout(() => {
+        window.location.href = "lvl5.html";
+    }, 60000);
+}
+
+function update() {
+    player.dy += player.gravity;
+    player.y += player.dy;
+    
+    if (frameCount % 120 === 0) spawnObstacle(); // Obstáculos aparecen con más separación
+    frameCount++;
+    
+    obstacles.forEach(obstacle => obstacle.x -= 5);
+    
+    checkCollision();
+    
+    if (player.y + player.height > canvas.height || player.y < 0) {
+        loseLife();
+    }
+    
+    requestAnimationFrame(update);
+    draw();
+}
+
+function checkCollision() {
+    for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obstacle = obstacles[i];
+        if (
+            player.x < obstacle.x + obstacle.width &&
+            player.x + player.width > obstacle.x &&
+            player.y < obstacle.y + obstacle.height &&
+            player.y + player.height > obstacle.y
+        ) {
+            obstacles.splice(i, 1); // Eliminar obstáculo al colisionar
+            loseLife();
+        }
+    }
+}
+
+function loseLife() {
+    lives--;
+    if (lives <= 0) {
+        resetGame();
+    } else {
+        player.y = canvas.height / 2;
+        player.dy = 0;
+    }
+}
+
+function resetGame() {
+    lives = 5;
+    player.y = canvas.height / 2;
+    player.dy = 0;
+    obstacles.length = 0;
+    frameCount = 0;
+    gameStarted = false;
+    clearTimeout(gameTimer); // Reiniciar el temporizador
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(player.img, player.x, player.y, player.width, player.height);
+    ctx.fillStyle = "blue";
+    obstacles.forEach(obstacle => ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height));
+
+    // Dibujar vidas con corazones
+    for (let i = 0; i < lives; i++) {
+        ctx.drawImage(heartImg, 20 + i * 40, 20, 30, 30);
+    }
+}
+
+update();
+
+
+
+
+    </script>
+</body>
+</html>
+
+

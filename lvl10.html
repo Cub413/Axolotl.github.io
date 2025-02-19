@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Snake Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: 'Press Start 2P', monospace;
+            color: white;
+                               background: linear-gradient(90deg,#B100FF, #6200ea,#00BBFF);
+            overflow: hidden;
+        }
+
+        /* Modo vertical */
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 1px;
+            position: relative;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: #001D82;
+            position: relative;
+        }
+
+        .snake {
+            background-image: url('/pressets/axolot1.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .food {
+            background-image: url('/pressets/coin.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+
+        .menu {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ff8c00;
+            padding: 20px;
+            color: white;
+            text-align: center;
+            font-size: 24px;
+            border-radius: 10px;
+            border: 3px solid #ffcc00;
+        }
+
+        .menu button {
+            background-color: #555;
+            color: white;
+            border: none;
+            padding: 10px;
+            margin: 5px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .menu button:hover {
+            background-color: #777;
+        }
+
+        .score {
+            font-size: 20px;
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #ffcc00;
+        }
+
+        /* Estilo para cuando el dispositivo está en horizontal */
+        .horizontal {
+            display: none;
+            background-color: black;
+            color: white;
+            font-size: 30px;
+            text-align: center;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .horizontal.show {
+            display: flex;
+        }
+
+        .horizontal p {
+            margin-top: 20px;
+        }
+
+        /* Asegurar que el contenido funcione solo en vertical */
+        @media (orientation: landscape) {
+            .game-container {
+                display: none;
+            }
+            .horizontal {
+                display: flex;
+            }
+        }
+
+    </style>
+</head>
+<body>
+    <div class="score" id="score-display">Puntuación: 0</div>
+    <div class="game-container" id="game-container"></div>
+    <div class="menu" id="menu">
+        <p>¡Perdiste! Puntuación: <span id="final-score"></span></p>
+        <button onclick="restartGame()">Reiniciar Juego</button>
+    </div>
+    <div class="horizontal" id="horizontal">
+        <p>¡Por favor, gira tu dispositivo a modo vertical! 📱</p>
+    </div>
+
+    <script>
+        const gameContainer = document.getElementById('game-container');
+        const menu = document.getElementById('menu');
+        const scoreDisplay = document.getElementById('score-display');
+        const finalScore = document.getElementById('final-score');
+        const horizontalMessage = document.getElementById('horizontal');
+        const gridSize = 10;
+        let snake = [{ x: 4, y: 4 }];
+        let food = { x: 6, y: 6 };
+        let direction = 'RIGHT';
+        let gameInterval;
+        let score = 0;
+
+        let isGameActive = false; // Juego pausado hasta que esté en vertical
+
+        function createBoard() {
+            gameContainer.innerHTML = '';
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell');
+                    gameContainer.appendChild(cell);
+                }
+            }
+        }
+
+        function updateSnake() {
+            const cells = gameContainer.getElementsByClassName('cell');
+            Array.from(cells).forEach(cell => {
+                cell.classList.remove('snake');
+                cell.classList.remove('food');
+            });
+
+            snake.forEach(segment => {
+                const index = segment.y * gridSize + segment.x;
+                cells[index].classList.add('snake');
+            });
+
+            const foodIndex = food.y * gridSize + food.x;
+            cells[foodIndex].classList.add('food');
+        }
+
+        function moveSnake() {
+            const head = { ...snake[0] };
+
+            switch (direction) {
+                case 'UP':
+                    head.y--;
+                    break;
+                case 'DOWN':
+                    head.y++;
+                    break;
+                case 'LEFT':
+                    head.x--;
+                    break;
+                case 'RIGHT':
+                    head.x++;
+                    break;
+            }
+
+            if (head.x < 0 || head.x >= gridSize || head.y < 0 || head.y >= gridSize || isCollidingWithSelf(head)) {
+                gameOver();
+                return;
+            }
+
+            snake.unshift(head);
+
+            if (head.x === food.x && head.y === food.y) {
+                score++;
+                if (score >= 20) {
+                    window.location.href = 'fin.html'; // Redirigir a fin.html cuando llega a 30 puntos
+                } else {
+                    spawnFood();
+                }
+            } else {
+                snake.pop();
+            }
+
+            scoreDisplay.textContent = `Puntuación: ${score}`;
+            updateSnake();
+        }
+
+        function isCollidingWithSelf(head) {
+            return snake.some(segment => segment.x === head.x && segment.y === head.y);
+        }
+
+        function spawnFood() {
+            const emptyCells = [];
+            const cells = gameContainer.getElementsByClassName('cell');
+            Array.from(cells).forEach((cell, index) => {
+                const x = index % gridSize;
+                const y = Math.floor(index / gridSize);
+                if (!isCellOccupied(x, y)) {
+                    emptyCells.push({ x, y });
+                }
+            });
+            const randomCell = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            food = randomCell;
+        }
+
+        function isCellOccupied(x, y) {
+            return snake.some(segment => segment.x === x && segment.y === y);
+        }
+
+        function handleTouchStart(event) {
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        }
+
+        function handleTouchMove(event) {
+            const touch = event.touches[0];
+            const diffX = touch.clientX - touchStartX;
+            const diffY = touch.clientY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX > 0 && direction !== 'LEFT') {
+                    direction = 'RIGHT';
+                } else if (diffX < 0 && direction !== 'RIGHT') {
+                    direction = 'LEFT';
+                }
+            } else {
+                if (diffY > 0 && direction !== 'UP') {
+                    direction = 'DOWN';
+                } else if (diffY < 0 && direction !== 'DOWN') {
+                    direction = 'UP';
+                }
+            }
+
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+        }
+
+        function gameOver() {
+            clearInterval(gameInterval);
+            finalScore.textContent = score;
+            menu.style.display = 'block';
+        }
+
+        function restartGame() {
+            score = 0;
+            snake = [{ x: 4, y: 4 }];
+            direction = 'RIGHT';
+            food = { x: 6, y: 6 };
+            menu.style.display = 'none';
+            createBoard();
+            updateSnake();
+            if (isGameActive) {
+                gameInterval = setInterval(moveSnake, 200);
+            }
+        }
+
+        function startGame() {
+            createBoard();
+            updateSnake();
+            isGameActive = true;
+            gameInterval = setInterval(moveSnake, 200);
+        }
+
+        // Controlar la orientación
+        window.addEventListener('orientationchange', checkOrientation);
+        checkOrientation();  // Ejecutar la comprobación cuando la página cargue
+
+        function checkOrientation() {
+            if (window.orientation === 90 || window.orientation === -90) {
+                // En horizontal, mostrar mensaje y ocultar juego
+                horizontalMessage.classList.add('show');
+                gameContainer.style.display = 'none';
+                isGameActive = false;
+            } else {
+                // En vertical, ocultar mensaje y mostrar juego
+                horizontalMessage.classList.remove('show');
+                gameContainer.style.display = 'grid';
+                if (!isGameActive) {
+                    startGame(); // Iniciar el juego cuando el dispositivo esté en vertical
+                }
+            }
+        }
+
+        gameContainer.addEventListener('touchstart', handleTouchStart);
+        gameContainer.addEventListener('touchmove', handleTouchMove);
+    </script>
+</body>
+</html>

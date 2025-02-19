@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"> <!-- Fuente de Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body, html {
+            height: 100%;
+            width: 100%;
+            background-color: black;
+            font-family: 'Press Start 2P', cursive; /* Fuente pixel art */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            text-align: center; /* Asegura que el texto se centre en el eje horizontal */
+        }
+
+        #intro-screen {
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            background-color: black;
+        }
+
+        #intro-text {
+            font-size: 40px; /* Tamaño de la fuente aumentado */
+            color: white;
+            opacity: 0;
+            animation: fadeIn 4s ease-in-out forwards, fadeOut 4s ease-in-out forwards 6s; /* Animaciones más lentas */
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+                transform: scale(1);
+            }
+            to {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+        }
+
+        #rotate-icon {
+            font-size: 60px;
+            color: white;
+            opacity: 0;
+            display: none; /* Oculto hasta que se detecte la orientación vertical */
+        }
+
+    </style>
+</head>
+<body>
+    <div id="intro-screen">
+        <div id="intro-text">Made by Cub's Team</div>
+<div id="rotate-icon" style="font-size: 70px; transform: rotate(90deg);">📱</div> <!-- Ícono de teléfono móvil en horizontal -->
+
+
+    </div>
+
+    <script>
+        // Detectar la orientación de la pantalla y actuar en consecuencia
+        function detectOrientation() {
+            const rotateIcon = document.getElementById("rotate-icon");
+            const introText = document.getElementById("intro-text");
+
+            if (window.innerHeight > window.innerWidth) {
+                // Si está en orientación vertical, mostramos el ícono de rotar
+                rotateIcon.style.display = "block";
+                rotateIcon.style.opacity = "1";
+                introText.style.display = "none"; // Ocultar el texto
+            } else {
+                // Si está en orientación horizontal, mostramos el texto
+                rotateIcon.style.display = "none";
+                introText.style.display = "block";
+            }
+        }
+
+        // Escuchar los cambios de orientación
+        window.addEventListener("resize", detectOrientation);
+        
+        // Llamar la función al cargar la página
+        window.addEventListener("load", detectOrientation);
+
+        // Al final de la animación, redirigir a home.html si está en horizontal
+        document.getElementById("intro-text").addEventListener("animationend", function() {
+            if (window.innerHeight <= window.innerWidth) {
+                window.location.href = "home.html";
+            }
+        });
+    </script>
+</body>
+</html>
